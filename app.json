@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Justice Melon",
+    "name": "Mr. Justice Melon",
     "slug": "justice-melon",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -19,7 +19,7 @@
     "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.justicemelon.loadtesting",
+      "bundleIdentifier": "com.mrjusticemelon.loadtesting",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true
@@ -31,7 +31,7 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FF5A76"
       },
-      "package": "com.justicemelon.loadtesting",
+      "package": "com.mrjusticemelon.loadtesting",
       "permissions": ["FOREGROUND_SERVICE"]
     },
     "web": {

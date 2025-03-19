@@ -6,6 +6,8 @@ import {
   Platform,
   Alert,
   Dimensions,
+  Animated,
+  TouchableWithoutFeedback,
 } from 'react-native';
 import {
   Button,
@@ -20,6 +22,9 @@ import {
   Portal,
   Divider,
   useTheme,
+  IconButton,
+  Surface,
+  TouchableRipple,
 } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -52,9 +57,67 @@ type HomeScreenNavigationProp = NativeStackNavigationProp<
   'Home'
 >;
 
+// Custom Toggle Switch Component
+interface CustomToggleSwitchProps {
+  isActive: boolean;
+  onToggle: () => void;
+  disabled?: boolean;
+}
+
+const CustomToggleSwitch: React.FC<CustomToggleSwitchProps> = ({
+  isActive,
+  onToggle,
+  disabled = false,
+}) => {
+  const [animatedValue] = useState(new Animated.Value(isActive ? 1 : 0));
+
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: isActive ? 1 : 0,
+      duration: 250,
+      useNativeDriver: false,
+    }).start();
+  }, [isActive]);
+
+  const toggleBackgroundColor = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['#CCCCCC', colors.error],
+  });
+
+  const translateX = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [4, 68], // Adjusted for smaller width
+  });
+
+  const handlePress = () => {
+    if (!disabled) {
+      onToggle();
+    }
+  };
+
+  return (
+    <TouchableWithoutFeedback onPress={handlePress} disabled={disabled}>
+      <View style={styles.toggleContainer}>
+        <Animated.View
+          style={[
+            styles.toggleTrack,
+            { backgroundColor: toggleBackgroundColor },
+            disabled && styles.disabledToggle,
+          ]}
+        >
+          <Animated.View
+            style={[styles.toggleKnob, { transform: [{ translateX }] }]}
+          />
+        </Animated.View>
+      </View>
+    </TouchableWithoutFeedback>
+  );
+};
+
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const theme = useTheme();
+  const windowWidth = Dimensions.get('window').width;
 
   // State to track if load testing is active
   const [isTestingActive, setIsTestingActive] = useState<boolean>(false);
@@ -79,6 +142,10 @@ const HomeScreen: React.FC = () => {
   // Device specs state
   const [deviceSpecs, setDeviceSpecs] = useState<DeviceSpecs | null>(null);
   const [specsDialogVisible, setSpecsDialogVisible] = useState<boolean>(false);
+
+  // State to track whether controls are expanded
+  const [areControlsExpanded, setAreControlsExpanded] =
+    useState<boolean>(false);
 
   // Load device specs and recommended intensity when the component mounts
   useEffect(() => {
@@ -280,150 +347,176 @@ const HomeScreen: React.FC = () => {
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: colors.background }]}
+      contentContainerStyle={styles.contentContainer}
     >
+      {/* Main Justice Toggle Switch */}
+      <Surface style={styles.centerButtonContainer}>
+        <Text style={styles.intensityLabel}>
+          {getIntensityDisplayName(intensity)} Intensity
+        </Text>
+
+        <View style={styles.toggleSwitchContainer}>
+          <CustomToggleSwitch
+            isActive={isTestingActive}
+            onToggle={toggleLoadTesting}
+          />
+        </View>
+
+        <Text style={styles.servingLabel}>
+          {isTestingActive
+            ? 'Now Serving Justice'
+            : 'Press button to serve justice'}
+        </Text>
+      </Surface>
+
+      {/* Expandable Controls */}
       <Card style={styles.card}>
-        <Card.Content>
-          <Title style={{ color: colors.primary }}>
-            🍉 Justice Serving Controls
-          </Title>
+        <TouchableRipple
+          onPress={() => setAreControlsExpanded(!areControlsExpanded)}
+        >
+          <View style={styles.cardHeader}>
+            <Title style={{ color: colors.primary }}>
+              🍉 Justice Serving Controls
+            </Title>
+            <List.Icon
+              icon={areControlsExpanded ? 'chevron-up' : 'chevron-down'}
+              color={colors.secondary}
+              style={{ marginRight: 8 }}
+            />
+          </View>
+        </TouchableRipple>
 
-          <View style={styles.switchContainer}>
-            <Text>
-              Background Mode{' '}
-              {Platform.OS !== 'android' ? '(Android Only)' : ''}
+        {areControlsExpanded && (
+          <Card.Content>
+            <View style={styles.switchContainer}>
+              <Text>
+                Background Mode{' '}
+                {Platform.OS !== 'android' ? '(Android Only)' : ''}
+              </Text>
+              <Switch
+                value={isBackgroundMode}
+                onValueChange={toggleBackgroundMode}
+                disabled={isTestingActive || Platform.OS !== 'android'}
+                color={colors.secondary}
+              />
+            </View>
+
+            <View style={styles.switchContainer}>
+              <Text>Auto Intensity (Based on Device Specs)</Text>
+              <Switch
+                value={isAutoIntensity}
+                onValueChange={toggleAutoIntensity}
+                disabled={isTestingActive}
+                color={colors.primary}
+              />
+            </View>
+
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              🍉 Justice Intensity:
             </Text>
-            <Switch
-              value={isBackgroundMode}
-              onValueChange={toggleBackgroundMode}
-              disabled={isTestingActive || Platform.OS !== 'android'}
-              color={colors.secondary}
-            />
-          </View>
-
-          <View style={styles.switchContainer}>
-            <Text>Auto Intensity (Based on Device Specs)</Text>
-            <Switch
-              value={isAutoIntensity}
-              onValueChange={toggleAutoIntensity}
-              disabled={isTestingActive}
-              color={colors.primary}
-            />
-          </View>
-
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>
-            🍉 Watermelon Intensity:
-          </Text>
-          <View style={[styles.intensityButtons, styles.intensityRow]}>
-            <Button
-              mode={intensity === IntensityLevel.LOW ? 'contained' : 'outlined'}
-              onPress={() => changeIntensity(IntensityLevel.LOW)}
-              disabled={isTestingActive || isAutoIntensity}
-              style={[
-                styles.intensityButton,
-                getIntensityButtonStyle(IntensityLevel.LOW),
-              ]}
-              labelStyle={getIntensityTextColor(IntensityLevel.LOW)}
-              color={colors.secondaryLight}
-            >
-              Seed
-            </Button>
-            <Button
-              mode={
-                intensity === IntensityLevel.MEDIUM ? 'contained' : 'outlined'
-              }
-              onPress={() => changeIntensity(IntensityLevel.MEDIUM)}
-              disabled={isTestingActive || isAutoIntensity}
-              style={[
-                styles.intensityButton,
-                getIntensityButtonStyle(IntensityLevel.MEDIUM),
-              ]}
-              labelStyle={getIntensityTextColor(IntensityLevel.MEDIUM)}
-              color={colors.secondary}
-            >
-              Slice
-            </Button>
-            <Button
-              mode={
-                intensity === IntensityLevel.HIGH ? 'contained' : 'outlined'
-              }
-              onPress={() => changeIntensity(IntensityLevel.HIGH)}
-              disabled={isTestingActive || isAutoIntensity}
-              style={[
-                styles.intensityButton,
-                getIntensityButtonStyle(IntensityLevel.HIGH),
-              ]}
-              labelStyle={getIntensityTextColor(IntensityLevel.HIGH)}
-              color={colors.primaryLight}
-            >
-              Half
-            </Button>
-          </View>
-          <View style={[styles.intensityButtons, styles.intensityRow]}>
-            <Button
-              mode={
-                intensity === IntensityLevel.VERY_HIGH
-                  ? 'contained'
-                  : 'outlined'
-              }
-              onPress={() => changeIntensity(IntensityLevel.VERY_HIGH)}
-              disabled={isTestingActive || isAutoIntensity}
-              style={[
-                styles.intensityButton,
-                getIntensityButtonStyle(IntensityLevel.VERY_HIGH),
-              ]}
-              labelStyle={getIntensityTextColor(IntensityLevel.VERY_HIGH)}
-              color={colors.primary}
-            >
-              Full
-            </Button>
-            <Button
-              mode={
-                intensity === IntensityLevel.EXTREME ? 'contained' : 'outlined'
-              }
-              onPress={() => changeIntensity(IntensityLevel.EXTREME)}
-              disabled={isTestingActive || isAutoIntensity}
-              style={[
-                styles.intensityButton,
-                getIntensityButtonStyle(IntensityLevel.EXTREME),
-              ]}
-              labelStyle={getIntensityTextColor(IntensityLevel.EXTREME)}
-              color={colors.primaryDark}
-            >
-              Patch
-            </Button>
-            <Button
-              mode={
-                intensity === IntensityLevel.CUSTOM ? 'contained' : 'outlined'
-              }
-              onPress={() => {
-                changeIntensity(IntensityLevel.CUSTOM);
-                navigation.navigate('Settings');
-              }}
-              disabled={isTestingActive || isAutoIntensity}
-              style={[
-                styles.intensityButton,
-                getIntensityButtonStyle(IntensityLevel.CUSTOM),
-              ]}
-              labelStyle={getIntensityTextColor(IntensityLevel.CUSTOM)}
-              color={colors.accent}
-            >
-              Custom
-            </Button>
-          </View>
-
-          <Button
-            mode='contained'
-            onPress={toggleLoadTesting}
-            style={[
-              styles.toggleButton,
-              isTestingActive
-                ? { backgroundColor: colors.error }
-                : { backgroundColor: colors.secondary },
-            ]}
-          >
-            {isTestingActive ? 'Stop Serving Justice' : 'Start Serving Justice'}
-          </Button>
-        </Card.Content>
+            <View style={[styles.intensityButtons, styles.intensityRow]}>
+              <Button
+                mode={
+                  intensity === IntensityLevel.LOW ? 'contained' : 'outlined'
+                }
+                onPress={() => changeIntensity(IntensityLevel.LOW)}
+                disabled={isTestingActive || isAutoIntensity}
+                style={[
+                  styles.intensityButton,
+                  getIntensityButtonStyle(IntensityLevel.LOW),
+                ]}
+                labelStyle={getIntensityTextColor(IntensityLevel.LOW)}
+                color={colors.secondaryLight}
+              >
+                Seed
+              </Button>
+              <Button
+                mode={
+                  intensity === IntensityLevel.MEDIUM ? 'contained' : 'outlined'
+                }
+                onPress={() => changeIntensity(IntensityLevel.MEDIUM)}
+                disabled={isTestingActive || isAutoIntensity}
+                style={[
+                  styles.intensityButton,
+                  getIntensityButtonStyle(IntensityLevel.MEDIUM),
+                ]}
+                labelStyle={getIntensityTextColor(IntensityLevel.MEDIUM)}
+                color={colors.secondary}
+              >
+                Slice
+              </Button>
+              <Button
+                mode={
+                  intensity === IntensityLevel.HIGH ? 'contained' : 'outlined'
+                }
+                onPress={() => changeIntensity(IntensityLevel.HIGH)}
+                disabled={isTestingActive || isAutoIntensity}
+                style={[
+                  styles.intensityButton,
+                  getIntensityButtonStyle(IntensityLevel.HIGH),
+                ]}
+                labelStyle={getIntensityTextColor(IntensityLevel.HIGH)}
+                color={colors.primaryLight}
+              >
+                Half
+              </Button>
+            </View>
+            <View style={[styles.intensityButtons, styles.intensityRow]}>
+              <Button
+                mode={
+                  intensity === IntensityLevel.VERY_HIGH
+                    ? 'contained'
+                    : 'outlined'
+                }
+                onPress={() => changeIntensity(IntensityLevel.VERY_HIGH)}
+                disabled={isTestingActive || isAutoIntensity}
+                style={[
+                  styles.intensityButton,
+                  getIntensityButtonStyle(IntensityLevel.VERY_HIGH),
+                ]}
+                labelStyle={getIntensityTextColor(IntensityLevel.VERY_HIGH)}
+                color={colors.primary}
+              >
+                Full
+              </Button>
+              <Button
+                mode={
+                  intensity === IntensityLevel.EXTREME
+                    ? 'contained'
+                    : 'outlined'
+                }
+                onPress={() => changeIntensity(IntensityLevel.EXTREME)}
+                disabled={isTestingActive || isAutoIntensity}
+                style={[
+                  styles.intensityButton,
+                  getIntensityButtonStyle(IntensityLevel.EXTREME),
+                ]}
+                labelStyle={getIntensityTextColor(IntensityLevel.EXTREME)}
+                color={colors.primaryDark}
+              >
+                Patch
+              </Button>
+              <Button
+                mode={
+                  intensity === IntensityLevel.CUSTOM ? 'contained' : 'outlined'
+                }
+                onPress={() => {
+                  changeIntensity(IntensityLevel.CUSTOM);
+                  navigation.navigate('Settings');
+                }}
+                disabled={isTestingActive || isAutoIntensity}
+                style={[
+                  styles.intensityButton,
+                  getIntensityButtonStyle(IntensityLevel.CUSTOM),
+                ]}
+                labelStyle={getIntensityTextColor(IntensityLevel.CUSTOM)}
+                color={colors.accent}
+              >
+                Custom
+              </Button>
+            </View>
+          </Card.Content>
+        )}
       </Card>
 
       {isTestingActive && (
@@ -456,16 +549,6 @@ const HomeScreen: React.FC = () => {
           </Card.Content>
         </Card>
       )}
-
-      <Button
-        mode='outlined'
-        icon='devices'
-        onPress={() => setSpecsDialogVisible(true)}
-        style={[styles.specsButton, { borderColor: colors.secondary }]}
-        color={colors.secondary}
-      >
-        Device Specifications
-      </Button>
 
       {recentResults.length > 0 && (
         <Card style={styles.card}>
@@ -509,6 +592,16 @@ const HomeScreen: React.FC = () => {
         color={colors.primary}
       >
         Settings
+      </Button>
+
+      <Button
+        mode='outlined'
+        icon='devices'
+        onPress={() => setSpecsDialogVisible(true)}
+        style={[styles.specsButton, { borderColor: colors.secondary }]}
+        color={colors.secondary}
+      >
+        Device Specifications
       </Button>
 
       <Portal>
@@ -608,14 +701,82 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 16,
     backgroundColor: colors.background,
+  },
+  contentContainer: {
+    padding: 16,
   },
   card: {
     marginBottom: 16,
     elevation: 2,
     borderColor: colors.cardOutline,
     borderWidth: 1,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 16,
+    paddingRight: 16,
+    paddingVertical: 8,
+  },
+  centerButtonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    padding: 20,
+    borderRadius: 16,
+    elevation: 4,
+    backgroundColor: colors.background,
+  },
+  toggleSwitchContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 20,
+  },
+  toggleContainer: {
+    width: 120,
+    height: 60,
+    justifyContent: 'center',
+    padding: 5,
+  },
+  toggleTrack: {
+    width: '100%',
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    paddingHorizontal: 5,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+  },
+  toggleKnob: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: 'white',
+    position: 'absolute',
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+  },
+  disabledToggle: {
+    opacity: 0.5,
+  },
+  intensityLabel: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: colors.primary,
+    marginBottom: 10,
+  },
+  servingLabel: {
+    fontSize: 16,
+    color: colors.text,
+    marginTop: 10,
   },
   switchContainer: {
     flexDirection: 'row',
@@ -640,16 +801,6 @@ const styles = StyleSheet.create({
   intensityRow: {
     marginBottom: 8,
   },
-  toggleButton: {
-    marginVertical: 8,
-    paddingVertical: 8,
-  },
-  startButton: {
-    backgroundColor: colors.secondary,
-  },
-  stopButton: {
-    backgroundColor: colors.error,
-  },
   statusContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -664,7 +815,6 @@ const styles = StyleSheet.create({
   },
   specsButton: {
     marginBottom: 16,
-    backgroundColor: colors.secondaryLight + '33', // Adding transparency
     borderColor: colors.secondary,
   },
   specsDialog: {

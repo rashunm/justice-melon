@@ -39,7 +39,7 @@ import { colors } from '../theme/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Key for storing custom sites in AsyncStorage
-const CUSTOM_SITES_STORAGE_KEY = 'justice_melon_custom_sites';
+const CUSTOM_SITES_STORAGE_KEY = 'mr_justice_melon_custom_sites';
 
 type SettingsScreenNavigationProp = NativeStackNavigationProp<
   AppStackParamList,
@@ -565,8 +565,11 @@ const SettingsScreen: React.FC = () => {
         <Card.Content>
           <Title style={{ color: colors.primary }}>About</Title>
           <Text style={styles.aboutText}>
-            Justice Melon v1.0{'\n'}A mobile app for serving distributed justice
-            to websites through high-intensity request patterns.
+            Mr. Justice Melon v1.0{'\n'}
+            Like seeds scattered by the wind,{'\n'}
+            Our digital justice blooms across the web,{'\n'}A crimson tide of
+            righteousness,{'\n'}
+            Washing over those who threaten peace.
           </Text>
         </Card.Content>
       </Card>

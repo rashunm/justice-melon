@@ -112,7 +112,7 @@ const SplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) => {
             },
           ]}
         >
-          JUSTICE MELON
+          MR. JUSTICE MELON
         </Animated.Text>
 
         <Animated.Text

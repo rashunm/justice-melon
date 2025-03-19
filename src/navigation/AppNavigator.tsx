@@ -79,7 +79,7 @@ const AppNavigator: React.FC = () => {
           name='Home'
           component={HomeScreen}
           options={{
-            title: '🍉 Justice Serving',
+            title: '🍉 Mr. Justice Melon',
             headerTitleAlign: 'center',
           }}
         />

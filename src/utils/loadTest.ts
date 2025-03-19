@@ -43,7 +43,7 @@ export const testSingleUrl = async (url: string): Promise<TestResult> => {
       method: 'GET',
       headers: {
         Accept: 'text/html',
-        'User-Agent': 'JusticeMelonApp/1.0',
+        'User-Agent': 'MrJusticeMelonApp/1.0',
       },
     });
 
