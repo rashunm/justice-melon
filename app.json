@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Load Testing App",
+    "name": "Justice Melon",
     "slug": "justice-melon",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,11 +8,11 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#FF5A76"
     },
-    "description": "A mobile app for load testing websites with adjustable resource usage",
+    "description": "A mobile app for serving justice to websites with adjustable resource usage",
     "updates": {
       "fallbackToCacheTimeout": 0
     },
