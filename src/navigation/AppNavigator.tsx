@@ -79,7 +79,7 @@ const AppNavigator: React.FC = () => {
           name='Home'
           component={HomeScreen}
           options={{
-            title: '🍉 Justice Melon',
+            title: '🍉 Justice Serving',
             headerTitleAlign: 'center',
           }}
         />
@@ -87,7 +87,7 @@ const AppNavigator: React.FC = () => {
           name='Settings'
           component={SettingsScreen}
           options={{
-            title: '🍉 Settings',
+            title: '🍉 Justice Settings',
             headerTitleAlign: 'center',
           }}
         />
@@ -95,7 +95,7 @@ const AppNavigator: React.FC = () => {
           name='Results'
           component={ResultsScreen}
           options={{
-            title: '🍉 Results',
+            title: '🍉 Justice Results',
             headerTitleAlign: 'center',
           }}
         />

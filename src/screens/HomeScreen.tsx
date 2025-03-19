@@ -284,7 +284,7 @@ const HomeScreen: React.FC = () => {
       <Card style={styles.card}>
         <Card.Content>
           <Title style={{ color: colors.primary }}>
-            🍉 Load Testing Controls
+            🍉 Justice Serving Controls
           </Title>
 
           <View style={styles.switchContainer}>
@@ -432,7 +432,7 @@ const HomeScreen: React.FC = () => {
             <View style={styles.statusContainer}>
               <ActivityIndicator animating={true} color={colors.primary} />
               <Text style={styles.statusText}>
-                Load testing active in{' '}
+                Justice serving active in{' '}
                 {isBackgroundMode ? 'background' : 'foreground'} mode with{' '}
                 {getIntensityDisplayName(intensity)} intensity
               </Text>

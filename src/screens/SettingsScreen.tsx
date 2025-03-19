@@ -13,6 +13,7 @@ import {
   Subheading,
   Caption,
   useTheme,
+  TouchableRipple,
 } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -35,6 +36,10 @@ import {
   getCustomInterval,
 } from '../utils/storage';
 import { colors } from '../theme/colors';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Key for storing custom sites in AsyncStorage
+const CUSTOM_SITES_STORAGE_KEY = 'justice_melon_custom_sites';
 
 type SettingsScreenNavigationProp = NativeStackNavigationProp<
   AppStackParamList,
@@ -58,18 +63,90 @@ const SettingsScreen: React.FC = () => {
   );
   const [intensityDialogVisible, setIntensityDialogVisible] = useState(false);
 
-  // Load the saved custom intensity settings when the component mounts
+  // Add state to track expanded sections
+  const [sitesExpanded, setSitesExpanded] = useState<boolean>(false);
+  const [intensityExpanded, setIntensityExpanded] = useState<boolean>(false);
+
+  // New state for bulk import dialog
+  const [bulkImportDialogVisible, setBulkImportDialogVisible] = useState(false);
+  const [importedSites, setImportedSites] = useState<string[]>([]);
+  const [importPreview, setImportPreview] = useState<string>('');
+
+  // State for storing all sites (default + custom)
+  const [allSites, setAllSites] = useState<string[]>(testSites);
+
+  // Load saved custom sites and custom intensity settings when component mounts
   useEffect(() => {
     const loadSettings = async () => {
       const savedRequests = await getCustomRequestsCount();
       const savedInterval = await getCustomInterval();
+      const savedCustomSites = await getCustomSites();
 
       setCustomRequestsCount(savedRequests.toString());
       setCustomInterval(savedInterval.toString());
+      setAllSites([...testSites, ...savedCustomSites]);
     };
 
     loadSettings();
   }, []);
+
+  // Function to get custom sites from storage
+  const getCustomSites = async (): Promise<string[]> => {
+    try {
+      const storedSites = await AsyncStorage.getItem(CUSTOM_SITES_STORAGE_KEY);
+      if (storedSites !== null) {
+        return JSON.parse(storedSites);
+      }
+      return [];
+    } catch (error) {
+      console.error('Error retrieving custom sites:', error);
+      return [];
+    }
+  };
+
+  // Function to save custom sites to storage
+  const saveCustomSites = async (sites: string[]): Promise<void> => {
+    try {
+      await AsyncStorage.setItem(
+        CUSTOM_SITES_STORAGE_KEY,
+        JSON.stringify(sites)
+      );
+    } catch (error) {
+      console.error('Error saving custom sites:', error);
+      Alert.alert('Error', 'Failed to save custom sites');
+    }
+  };
+
+  // Function to add a single custom site
+  const addCustomSite = async (url: string): Promise<void> => {
+    try {
+      const customSites = await getCustomSites();
+
+      // Check if site already exists
+      if ([...testSites, ...customSites].includes(url)) {
+        Alert.alert(
+          'Site Already Exists',
+          'This site is already in the justice serving list.'
+        );
+        return;
+      }
+
+      // Add new site to custom sites
+      const updatedCustomSites = [...customSites, url];
+      await saveCustomSites(updatedCustomSites);
+
+      // Update displayed sites
+      setAllSites([...testSites, ...updatedCustomSites]);
+
+      Alert.alert(
+        'Success',
+        'Custom site has been added to the justice serving list'
+      );
+    } catch (error) {
+      console.error('Error adding custom site:', error);
+      Alert.alert('Error', 'Failed to add custom site');
+    }
+  };
 
   // Handle clearing test results
   const handleClearResults = () => {
@@ -155,7 +232,7 @@ const SettingsScreen: React.FC = () => {
     }
   };
 
-  // Add a custom site to test (this is a placeholder function since we would need state management)
+  // Add a custom site to test
   const handleAddCustomSite = () => {
     if (!customSiteUrl) {
       Alert.alert('Error', 'Please enter a valid URL');
@@ -173,16 +250,123 @@ const SettingsScreen: React.FC = () => {
       return;
     }
 
-    // In a real app, you would add this to the testSites list
-    // For now, just show an alert
-    Alert.alert(
-      'Custom Site Added',
-      `URL: ${customSiteUrl}\n\nNote: In this demo version, custom sites are not actually saved.`
-    );
+    // Add the custom site
+    addCustomSite(customSiteUrl).then(() => {
+      // Expand the sites section to show the newly added site
+      setSitesExpanded(true);
 
-    // Close the dialog and clear the input
-    setCustomSiteDialogVisible(false);
-    setCustomSiteUrl('');
+      // Close the dialog and clear the input
+      setCustomSiteDialogVisible(false);
+      setCustomSiteUrl('');
+    });
+  };
+
+  // Handle bulk import from text file
+  const handleBulkImport = async () => {
+    // In a real implementation, we would use a document picker:
+    // 1. For React Native: react-native-document-picker
+    // 2. For Expo: expo-document-picker and expo-file-system
+
+    // Simulating file content for demonstration purposes
+    const simulatedFileContent =
+      'https://google.com\n' +
+      'https://fb.com\n' +
+      'invalid-url\n' +
+      'https://twitter.com';
+
+    // Parse URLs (one per line)
+    const urls = simulatedFileContent
+      .split('\n')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0);
+
+    // Basic validation of URLs
+    const validUrls: string[] = [];
+    const invalidUrls: string[] = [];
+
+    urls.forEach((url) => {
+      try {
+        // Try to parse as URL (will throw if invalid)
+        new URL(url);
+        validUrls.push(url);
+      } catch (e) {
+        invalidUrls.push(url);
+      }
+    });
+
+    // Set state for preview
+    setImportedSites(validUrls);
+
+    // Create preview text
+    let preview = `Found ${validUrls.length} valid URLs:`;
+    if (validUrls.length > 0) {
+      preview +=
+        '\n' + validUrls.map((url, index) => `${index + 1}. ${url}`).join('\n');
+    }
+
+    if (invalidUrls.length > 0) {
+      preview += `\n\nFound ${invalidUrls.length} invalid URLs:`;
+      preview +=
+        '\n' +
+        invalidUrls.map((url, index) => `${index + 1}. ${url}`).join('\n');
+    }
+
+    setImportPreview(preview);
+    setBulkImportDialogVisible(true);
+  };
+
+  // Confirm bulk import
+  const confirmBulkImport = async () => {
+    try {
+      const existingCustomSites = await getCustomSites();
+      const allExistingSites = [...testSites, ...existingCustomSites];
+
+      // Filter out sites that already exist
+      const newSites = importedSites.filter(
+        (site) => !allExistingSites.includes(site)
+      );
+
+      if (newSites.length === 0) {
+        Alert.alert(
+          'No New Sites',
+          'All valid sites from the import already exist in your list.'
+        );
+        setBulkImportDialogVisible(false);
+        setImportedSites([]);
+        setImportPreview('');
+        return;
+      }
+
+      // Add new sites to custom sites
+      const updatedCustomSites = [...existingCustomSites, ...newSites];
+      await saveCustomSites(updatedCustomSites);
+
+      // Update displayed sites
+      setAllSites([...testSites, ...updatedCustomSites]);
+
+      // Show success message
+      Alert.alert(
+        'Import Successful',
+        `Added ${newSites.length} new sites to the justice serving list.${
+          newSites.length !== importedSites.length
+            ? `\n\n${
+                importedSites.length - newSites.length
+              } sites were already in your list.`
+            : ''
+        }`
+      );
+
+      // Expand the sites section to show the newly added sites
+      setSitesExpanded(true);
+
+      // Close the dialog and reset state
+      setBulkImportDialogVisible(false);
+      setImportedSites([]);
+      setImportPreview('');
+    } catch (error) {
+      console.error('Error saving bulk imported sites:', error);
+      Alert.alert('Error', 'Failed to save imported sites');
+    }
   };
 
   return (
@@ -193,9 +377,17 @@ const SettingsScreen: React.FC = () => {
         <Card.Content>
           <Title style={{ color: colors.primary }}>App Settings</Title>
 
+          <View style={styles.infoContainer}>
+            <Text style={styles.infoText}>
+              Justice is served by randomly rotating between target sites.
+              Unresponsive sites will be skipped automatically to maintain
+              justice flow.
+            </Text>
+          </View>
+
           <List.Section>
             <List.Subheader style={{ color: colors.primary }}>
-              Load Test Settings
+              Justice Serving Settings
             </List.Subheader>
             <List.Item
               title='Custom Intensity Configuration'
@@ -213,25 +405,39 @@ const SettingsScreen: React.FC = () => {
 
           <List.Section>
             <List.Subheader style={{ color: colors.primary }}>
-              Test Sites
+              Justice Sites
             </List.Subheader>
             <List.Item
-              title='View Test Sites'
-              description='See the list of sites being tested'
+              title='View Justice Sites'
+              description='See the list of sites being served justice'
               left={(props) => (
                 <List.Icon {...props} icon='web' color={colors.secondary} />
               )}
-              onPress={() => {}}
+              onPress={() => setSitesExpanded(true)}
               titleStyle={{ color: colors.text }}
               descriptionStyle={{ color: colors.textLight }}
             />
             <List.Item
               title='Add Custom Site'
-              description='Add a custom website to the test list'
+              description='Add a custom website to the justice serving list'
               left={(props) => (
                 <List.Icon {...props} icon='plus' color={colors.secondary} />
               )}
               onPress={() => setCustomSiteDialogVisible(true)}
+              titleStyle={{ color: colors.text }}
+              descriptionStyle={{ color: colors.textLight }}
+            />
+            <List.Item
+              title='Import Sites from File'
+              description='Import multiple sites from a text file (one URL per line)'
+              left={(props) => (
+                <List.Icon
+                  {...props}
+                  icon='file-import'
+                  color={colors.secondary}
+                />
+              )}
+              onPress={handleBulkImport}
               titleStyle={{ color: colors.text }}
               descriptionStyle={{ color: colors.textLight }}
             />
@@ -244,8 +450,8 @@ const SettingsScreen: React.FC = () => {
               Data Management
             </List.Subheader>
             <List.Item
-              title='Clear Test Results'
-              description='Delete all saved test results'
+              title='Clear Justice Results'
+              description='Delete all saved justice serving results'
               left={(props) => (
                 <List.Icon {...props} icon='delete' color={colors.error} />
               )}
@@ -264,7 +470,7 @@ const SettingsScreen: React.FC = () => {
                 </List.Subheader>
                 <List.Item
                   title='Battery Optimization'
-                  description='How to disable battery optimization for background testing'
+                  description='How to disable battery optimization for background justice serving'
                   left={(props) => (
                     <List.Icon
                       {...props}
@@ -275,7 +481,7 @@ const SettingsScreen: React.FC = () => {
                   onPress={() => {
                     Alert.alert(
                       'Battery Optimization',
-                      "For best results with background testing, disable battery optimization for this app in your device settings:\n\nSettings > Apps > Load Testing > Battery > Don't optimize"
+                      "For best results with background justice serving, disable battery optimization for this app in your device settings:\n\nSettings > Apps > Justice Serving > Battery > Don't optimize"
                     );
                   }}
                   titleStyle={{ color: colors.text }}
@@ -288,55 +494,79 @@ const SettingsScreen: React.FC = () => {
       </Card>
 
       <Card style={styles.card}>
-        <Card.Content>
-          <Title style={{ color: colors.primary }}>Current Test Sites</Title>
-          {testSites.map((site, index) => (
-            <Text key={index} style={styles.siteUrl}>
-              {site}
-            </Text>
-          ))}
-        </Card.Content>
+        <TouchableRipple onPress={() => setSitesExpanded(!sitesExpanded)}>
+          <View style={styles.cardHeader}>
+            <Title style={{ color: colors.primary }}>
+              Current Justice Sites
+            </Title>
+            <List.Icon
+              icon={sitesExpanded ? 'chevron-up' : 'chevron-down'}
+              color={colors.secondary}
+            />
+          </View>
+        </TouchableRipple>
+        {sitesExpanded && (
+          <Card.Content>
+            {allSites.map((site, index) => (
+              <Text key={index} style={styles.siteUrl}>
+                {site}
+              </Text>
+            ))}
+          </Card.Content>
+        )}
       </Card>
 
       <Card style={styles.card}>
-        <Card.Content>
-          <Title style={{ color: colors.primary }}>
-            Custom Intensity Settings
-          </Title>
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Parallel Requests:</Text>
-            <Text style={styles.settingValue}>{customRequestsCount}</Text>
+        <TouchableRipple
+          onPress={() => setIntensityExpanded(!intensityExpanded)}
+        >
+          <View style={styles.cardHeader}>
+            <Title style={{ color: colors.primary }}>
+              Custom Intensity Settings
+            </Title>
+            <List.Icon
+              icon={intensityExpanded ? 'chevron-up' : 'chevron-down'}
+              color={colors.secondary}
+            />
           </View>
-          <Caption>Number of simultaneous requests sent to servers</Caption>
+        </TouchableRipple>
+        {intensityExpanded && (
+          <Card.Content>
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>Parallel Requests:</Text>
+              <Text style={styles.settingValue}>{customRequestsCount}</Text>
+            </View>
+            <Caption>Number of simultaneous requests sent to servers</Caption>
 
-          <View style={styles.settingRow}>
-            <Text style={styles.settingLabel}>Interval (ms):</Text>
-            <Text style={styles.settingValue}>{customInterval}</Text>
-          </View>
-          <Caption>Time between batches of requests in milliseconds</Caption>
+            <View style={styles.settingRow}>
+              <Text style={styles.settingLabel}>Interval (ms):</Text>
+              <Text style={styles.settingValue}>{customInterval}</Text>
+            </View>
+            <Caption>Time between batches of requests in milliseconds</Caption>
 
-          <Text style={styles.infoText}>
-            Warning: High request counts (20+) may cause device performance
-            issues and battery drain
-          </Text>
+            <Text style={styles.warningText}>
+              Warning: High request counts (20+) may cause device performance
+              issues and battery drain
+            </Text>
 
-          <Button
-            mode='outlined'
-            onPress={() => setIntensityDialogVisible(true)}
-            style={[styles.customizeButton, { borderColor: colors.primary }]}
-            color={colors.primary}
-          >
-            Customize
-          </Button>
-        </Card.Content>
+            <Button
+              mode='outlined'
+              onPress={() => setIntensityDialogVisible(true)}
+              style={[styles.customizeButton, { borderColor: colors.primary }]}
+              color={colors.primary}
+            >
+              Customize
+            </Button>
+          </Card.Content>
+        )}
       </Card>
 
       <Card style={styles.card}>
         <Card.Content>
           <Title style={{ color: colors.primary }}>About</Title>
           <Text style={styles.aboutText}>
-            Load Testing App v1.0{'\n'}A mobile app for testing website response
-            times and performance.
+            Justice Melon v1.0{'\n'}A mobile app for serving distributed justice
+            to websites through high-intensity request patterns.
           </Text>
         </Card.Content>
       </Card>
@@ -426,6 +656,35 @@ const SettingsScreen: React.FC = () => {
             </Button>
           </Dialog.Actions>
         </Dialog>
+
+        <Dialog
+          visible={bulkImportDialogVisible}
+          onDismiss={() => setBulkImportDialogVisible(false)}
+        >
+          <Dialog.Title style={{ color: colors.primary }}>
+            Bulk Import Sites
+          </Dialog.Title>
+          <Dialog.Content>
+            <ScrollView style={styles.importPreviewContainer}>
+              <Text style={styles.importPreviewText}>{importPreview}</Text>
+            </ScrollView>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <Button
+              onPress={() => setBulkImportDialogVisible(false)}
+              color={colors.textLight}
+            >
+              Cancel
+            </Button>
+            <Button
+              onPress={confirmBulkImport}
+              color={colors.primary}
+              disabled={importedSites.length === 0}
+            >
+              Import
+            </Button>
+          </Dialog.Actions>
+        </Dialog>
       </Portal>
     </ScrollView>
   );
@@ -467,9 +726,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.primary,
   },
+  infoContainer: {
+    backgroundColor: colors.secondaryLight + '30',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 16,
+    borderLeftWidth: 4,
+    borderLeftColor: colors.secondary,
+  },
   infoText: {
-    marginTop: 16,
-    color: colors.error,
+    color: colors.text,
     fontSize: 14,
   },
   customizeButton: {
@@ -483,6 +749,23 @@ const styles = StyleSheet.create({
     marginTop: 16,
     color: colors.error,
     fontSize: 14,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingLeft: 16,
+    paddingRight: 0,
+    paddingVertical: 8,
+  },
+  importPreviewContainer: {
+    maxHeight: 300,
+    marginTop: 8,
+  },
+  importPreviewText: {
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    fontSize: 12,
+    color: colors.text,
   },
 });
 

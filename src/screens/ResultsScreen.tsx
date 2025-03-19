@@ -89,7 +89,7 @@ const ResultsScreen: React.FC = () => {
     <ScrollView style={styles.container}>
       <Card style={styles.card}>
         <Card.Content>
-          <Title>Test Results</Title>
+          <Title>Justice Results</Title>
 
           <Searchbar
             placeholder='Search by URL'
