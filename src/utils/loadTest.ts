@@ -1,4 +1,4 @@
-import { testSites } from '../constants/sites';
+import { testSites, fetchTestSites } from '../constants/sites';
 
 // Simple interface to store result statistics
 export interface TestResult {
@@ -15,6 +15,22 @@ const MAX_RECENT_SITES = 3; // Number of sites to "remember" before reusing
 
 // Short timeout for requests (ms) - typical for DOS attacks
 const REQUEST_TIMEOUT_MS = 3000;
+
+// Store sites retrieved from GitHub (or fallback to default)
+let availableSites: string[] = [...testSites];
+
+/**
+ * Initialize available sites from GitHub or cache
+ */
+export const initializeAvailableSites = async (): Promise<void> => {
+  try {
+    const sites = await fetchTestSites();
+    availableSites = sites;
+  } catch (error) {
+    console.error('Error initializing sites, using fallback:', error);
+    availableSites = [...testSites];
+  }
+};
 
 /**
  * Runs a load test on a single URL and returns the result with a timeout
@@ -68,18 +84,18 @@ export const testSingleUrl = async (url: string): Promise<TestResult> => {
  */
 export const selectRandomSite = (): string => {
   // Create a pool of sites excluding recently used ones (if possible)
-  let availableSites = testSites.filter(
+  let sitesToUse = availableSites.filter(
     (site) => !recentlyUsedSites.includes(site)
   );
 
   // If all sites have been recently used, just use all sites
-  if (availableSites.length === 0) {
-    availableSites = testSites;
+  if (sitesToUse.length === 0) {
+    sitesToUse = availableSites;
   }
 
   // Select a random site from the available pool
-  const randomIndex = Math.floor(Math.random() * availableSites.length);
-  const selectedSite = availableSites[randomIndex];
+  const randomIndex = Math.floor(Math.random() * sitesToUse.length);
+  const selectedSite = sitesToUse[randomIndex];
 
   // Add to recently used sites and maintain max length
   recentlyUsedSites.push(selectedSite);

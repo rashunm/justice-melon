@@ -20,8 +20,15 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { AppStackParamList } from '../navigation/AppNavigator';
 import {
   testSites,
+  IntensityLevel,
+  INTENSITY_LEVEL_KEY,
+  AUTO_DETECT_INTENSITY_KEY,
+  CUSTOM_REQUESTS_COUNT_KEY,
+  CUSTOM_INTERVAL_KEY,
   DEFAULT_CUSTOM_REQUESTS,
   DEFAULT_CUSTOM_INTERVAL,
+  fetchTestSites,
+  CUSTOM_SITES_STORAGE_KEY,
 } from '../constants/sites';
 import { clearTestResults } from '../services/ForegroundService';
 import {
@@ -37,9 +44,6 @@ import {
 } from '../utils/storage';
 import { colors } from '../theme/colors';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Key for storing custom sites in AsyncStorage
-const CUSTOM_SITES_STORAGE_KEY = 'mr_justice_melon_custom_sites';
 
 type SettingsScreenNavigationProp = NativeStackNavigationProp<
   AppStackParamList,
@@ -73,7 +77,9 @@ const SettingsScreen: React.FC = () => {
   const [importPreview, setImportPreview] = useState<string>('');
 
   // State for storing all sites (default + custom)
-  const [allSites, setAllSites] = useState<string[]>(testSites);
+  const [allSites, setAllSites] = useState<string[]>([]);
+  // State for default test sites (from GitHub or cache)
+  const [defaultSites, setDefaultSites] = useState<string[]>([]);
 
   // Load saved custom sites and custom intensity settings when component mounts
   useEffect(() => {
@@ -82,15 +88,18 @@ const SettingsScreen: React.FC = () => {
       const savedInterval = await getCustomInterval();
       const savedCustomSites = await getCustomSites();
 
+      // Get sites from GitHub or cache
+      const availableSites = await fetchTestSites();
+      setDefaultSites(availableSites);
+
       setCustomRequestsCount(savedRequests.toString());
       setCustomInterval(savedInterval.toString());
-      setAllSites([...testSites, ...savedCustomSites]);
+      setAllSites([...availableSites, ...savedCustomSites]);
     };
 
     loadSettings();
   }, []);
 
-  // Function to get custom sites from storage
   const getCustomSites = async (): Promise<string[]> => {
     try {
       const storedSites = await AsyncStorage.getItem(CUSTOM_SITES_STORAGE_KEY);
@@ -122,26 +131,21 @@ const SettingsScreen: React.FC = () => {
     try {
       const customSites = await getCustomSites();
 
-      // Check if site already exists
-      if ([...testSites, ...customSites].includes(url)) {
-        Alert.alert(
-          'Site Already Exists',
-          'This site is already in the justice serving list.'
-        );
+      // Check if URL already exists in default or custom sites
+      if ([...defaultSites, ...customSites].includes(url)) {
+        Alert.alert('Error', 'This URL already exists in your sites list');
         return;
       }
 
-      // Add new site to custom sites
+      // Add the new URL and save
       const updatedCustomSites = [...customSites, url];
       await saveCustomSites(updatedCustomSites);
 
-      // Update displayed sites
-      setAllSites([...testSites, ...updatedCustomSites]);
+      // Update the local state
+      setAllSites([...defaultSites, ...updatedCustomSites]);
+      setCustomSiteUrl('');
 
-      Alert.alert(
-        'Success',
-        'Custom site has been added to the justice serving list'
-      );
+      Alert.alert('Success', 'Custom site added successfully');
     } catch (error) {
       console.error('Error adding custom site:', error);
       Alert.alert('Error', 'Failed to add custom site');
@@ -318,54 +322,46 @@ const SettingsScreen: React.FC = () => {
   // Confirm bulk import
   const confirmBulkImport = async () => {
     try {
+      // Get existing custom sites
       const existingCustomSites = await getCustomSites();
-      const allExistingSites = [...testSites, ...existingCustomSites];
 
-      // Filter out sites that already exist
-      const newSites = importedSites.filter(
-        (site) => !allExistingSites.includes(site)
+      // Validate and filter URLs
+      const validUrls = importedSites.filter((url) => {
+        try {
+          new URL(url);
+          return true;
+        } catch {
+          return false;
+        }
+      });
+
+      // Remove duplicates with sites already in the list
+      const allExistingSites = [...defaultSites, ...existingCustomSites];
+      const newUrls = validUrls.filter(
+        (url) => !allExistingSites.includes(url)
       );
 
-      if (newSites.length === 0) {
-        Alert.alert(
-          'No New Sites',
-          'All valid sites from the import already exist in your list.'
-        );
-        setBulkImportDialogVisible(false);
-        setImportedSites([]);
-        setImportPreview('');
-        return;
-      }
-
-      // Add new sites to custom sites
-      const updatedCustomSites = [...existingCustomSites, ...newSites];
+      // Update custom sites
+      const updatedCustomSites = [...existingCustomSites, ...newUrls];
       await saveCustomSites(updatedCustomSites);
 
-      // Update displayed sites
-      setAllSites([...testSites, ...updatedCustomSites]);
-
-      // Show success message
-      Alert.alert(
-        'Import Successful',
-        `Added ${newSites.length} new sites to the justice serving list.${
-          newSites.length !== importedSites.length
-            ? `\n\n${
-                importedSites.length - newSites.length
-              } sites were already in your list.`
-            : ''
-        }`
-      );
-
-      // Expand the sites section to show the newly added sites
-      setSitesExpanded(true);
-
-      // Close the dialog and reset state
+      // Update UI
+      setAllSites([...defaultSites, ...updatedCustomSites]);
       setBulkImportDialogVisible(false);
       setImportedSites([]);
       setImportPreview('');
+
+      Alert.alert(
+        'Success',
+        `Added ${newUrls.length} new sites (${
+          validUrls.length - newUrls.length
+        } duplicates ignored, ${
+          importedSites.length - validUrls.length
+        } invalid URLs skipped)`
+      );
     } catch (error) {
-      console.error('Error saving bulk imported sites:', error);
-      Alert.alert('Error', 'Failed to save imported sites');
+      console.error('Error with bulk import:', error);
+      Alert.alert('Error', 'Failed to import sites');
     }
   };
 

@@ -5,6 +5,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { LogBox } from 'react-native';
 import { watermelonTheme } from './src/theme/theme';
 import SplashScreen from './src/components/SplashScreen';
+import { initializeAvailableSites } from './src/utils/loadTest';
 
 // Ignore specific warnings that might appear due to dependencies
 LogBox.ignoreLogs([
@@ -17,11 +18,21 @@ export default function App() {
 
   // Optional: load any initial data or perform any setup tasks here
   useEffect(() => {
-    // Simulate loading time for demonstration purposes
-    // In a real app, you would load actual data or resources here
-    setTimeout(() => {
-      // This timeout is just for demo purposes to ensure the splash screen is visible
-    }, 1000);
+    // Load sites from GitHub or cache
+    const initialize = async () => {
+      try {
+        await initializeAvailableSites();
+      } catch (error) {
+        console.error('Failed to initialize sites:', error);
+      }
+
+      // Delay a bit to ensure splash screen is visible
+      setTimeout(() => {
+        // This is intentionally left empty for demonstration purposes
+      }, 1000);
+    };
+
+    initialize();
   }, []);
 
   // Function to handle splash screen completion

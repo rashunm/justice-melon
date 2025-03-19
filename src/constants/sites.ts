@@ -1,4 +1,6 @@
-// Test sites to check
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Default test sites to use as fallback
 export const testSites = [
   'https://www.google.com',
   'https://www.facebook.com',
@@ -8,6 +10,10 @@ export const testSites = [
   'https://www.twitter.com',
   'https://www.instagram.com',
 ];
+
+// GitHub URL for sites.json
+export const GITHUB_SITES_URL =
+  'https://raw.githubusercontent.com/rashunm/justice-melon/main/sites.json';
 
 // Intensity levels for load testing with watermelon-themed names
 export enum IntensityLevel {
@@ -40,3 +46,57 @@ export const INTENSITY_LEVEL_KEY = 'intensity_level';
 export const AUTO_DETECT_INTENSITY_KEY = 'auto_detect_intensity';
 export const CUSTOM_REQUESTS_COUNT_KEY = 'custom_requests_count';
 export const CUSTOM_INTERVAL_KEY = 'custom_interval';
+export const CUSTOM_SITES_STORAGE_KEY = 'custom_sites';
+export const SITES_CACHE_KEY = 'sites_cache';
+export const SITES_CACHE_TIMESTAMP_KEY = 'sites_cache_timestamp';
+
+// Cache duration in milliseconds (24 hours)
+export const CACHE_DURATION_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Fetches test sites from GitHub with fallback to default sites
+ * and caching for 24 hours
+ */
+export const fetchTestSites = async (): Promise<string[]> => {
+  try {
+    // Check if we have a valid cache
+    const cachedTimestampStr = await AsyncStorage.getItem(
+      SITES_CACHE_TIMESTAMP_KEY
+    );
+
+    if (cachedTimestampStr) {
+      const cachedTimestamp = parseInt(cachedTimestampStr, 10);
+      const currentTime = Date.now();
+
+      // If the cache is less than 24 hours old, use it
+      if (currentTime - cachedTimestamp < CACHE_DURATION_MS) {
+        const cachedSites = await AsyncStorage.getItem(SITES_CACHE_KEY);
+        if (cachedSites) {
+          return JSON.parse(cachedSites);
+        }
+      }
+    }
+
+    // Fetch from GitHub if no valid cache exists
+    const response = await fetch(GITHUB_SITES_URL);
+    if (response.ok) {
+      const sites = await response.json();
+
+      // Cache the results
+      await AsyncStorage.setItem(SITES_CACHE_KEY, JSON.stringify(sites));
+      await AsyncStorage.setItem(
+        SITES_CACHE_TIMESTAMP_KEY,
+        Date.now().toString()
+      );
+
+      return sites;
+    } else {
+      // Fall back to default sites if fetch fails
+      return testSites;
+    }
+  } catch (error) {
+    console.error('Error fetching sites from GitHub:', error);
+    // Fall back to default sites on error
+    return testSites;
+  }
+};
