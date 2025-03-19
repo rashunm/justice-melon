@@ -421,7 +421,7 @@ const HomeScreen: React.FC = () => {
                 : { backgroundColor: colors.secondary },
             ]}
           >
-            {isTestingActive ? 'Stop Load Testing' : 'Start Load Testing'}
+            {isTestingActive ? 'Stop Serving Justice' : 'Start Serving Justice'}
           </Button>
         </Card.Content>
       </Card>
