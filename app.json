@@ -1,29 +1,38 @@
 {
   "expo": {
     "name": "Load Testing App",
-    "slug": "load-testing-app",
+    "slug": "justice-melon",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#FF5A76"
     },
     "description": "A mobile app for load testing websites with adjustable resource usage",
+    "updates": {
+      "fallbackToCacheTimeout": 0
+    },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.loadtestingapp.app"
+      "bundleIdentifier": "com.justicemelon.loadtesting",
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsArbitraryLoads": true
+        }
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#FF5A76"
       },
-      "package": "com.loadtestingapp.app",
-      "permissions": ["INTERNET", "WAKE_LOCK"]
+      "package": "com.justicemelon.loadtesting",
+      "permissions": ["FOREGROUND_SERVICE"]
     },
     "web": {
       "favicon": "./assets/favicon.png"

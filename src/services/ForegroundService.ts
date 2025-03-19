@@ -1,5 +1,10 @@
-import { LoadIntensity, testIntervals } from '../constants/sites';
+import {
+  IntensityLevel,
+  INTENSITY_REQUESTS,
+  DEFAULT_TEST_INTERVAL,
+} from '../constants/sites';
 import { TestResult, runLoadTestBatch } from '../utils/loadTest';
+import { loadCustomSettings } from '../utils/storage';
 
 // Storage for test results
 let testResults: TestResult[] = [];
@@ -11,16 +16,38 @@ let isLoadTestActive = false;
 let testIntervalId: NodeJS.Timeout | null = null;
 
 // Current testing intensity
-let currentIntensity: LoadIntensity = LoadIntensity.MEDIUM;
+let currentIntensity: IntensityLevel = IntensityLevel.MEDIUM;
+
+// Custom settings for custom intensity
+let customRequestsCount = 10;
+let customInterval = DEFAULT_TEST_INTERVAL;
 
 // Callbacks for UI updates
 type ResultCallback = (results: TestResult[]) => void;
 const resultCallbacks: ResultCallback[] = [];
 
 /**
+ * Initialize the service by loading custom settings
+ */
+export const initializeService = async (): Promise<void> => {
+  try {
+    const settings = await loadCustomSettings();
+    customRequestsCount = settings.requestsCount;
+    customInterval = settings.interval;
+  } catch (error) {
+    console.error('[ForegroundService] Error initializing service:', error);
+  }
+};
+
+// Initialize the service when the module is imported
+initializeService();
+
+/**
  * Start load testing in the foreground
  */
-export const startForegroundLoadTest = (intensity: LoadIntensity): boolean => {
+export const startForegroundLoadTest = async (
+  intensity: IntensityLevel
+): Promise<boolean> => {
   if (isLoadTestActive) {
     console.log('[ForegroundService] Load test already running');
     return false;
@@ -29,13 +56,29 @@ export const startForegroundLoadTest = (intensity: LoadIntensity): boolean => {
   isLoadTestActive = true;
   currentIntensity = intensity;
 
+  // Get interval based on intensity (handle custom intensity separately)
+  const intervalTime =
+    currentIntensity === IntensityLevel.CUSTOM
+      ? customInterval
+      : DEFAULT_TEST_INTERVAL;
+
   // Schedule periodic load tests
   testIntervalId = setInterval(async () => {
     if (!isLoadTestActive) return;
 
     try {
       console.log('[ForegroundService] Running load test batch');
-      const results = await runLoadTestBatch(currentIntensity);
+
+      // For custom intensity, pass the custom request count
+      // For standard intensities, get the request count from the INTENSITY_REQUESTS mapping
+      let requestCount: number;
+      if (currentIntensity === IntensityLevel.CUSTOM) {
+        requestCount = customRequestsCount;
+      } else {
+        requestCount = INTENSITY_REQUESTS[currentIntensity];
+      }
+
+      const results = await runLoadTestBatch(requestCount);
 
       // Store the results
       testResults = [...testResults, ...results];
@@ -54,10 +97,27 @@ export const startForegroundLoadTest = (intensity: LoadIntensity): boolean => {
     } catch (error) {
       console.error('[ForegroundService] Error:', error);
     }
-  }, testIntervals[intensity]);
+  }, intervalTime);
 
   console.log('[ForegroundService] Foreground load test started');
   return true;
+};
+
+/**
+ * Update the custom intensity settings
+ */
+export const updateCustomSettings = (
+  requestsCount: number,
+  interval: number
+): void => {
+  customRequestsCount = requestsCount;
+  customInterval = interval;
+
+  // If currently running with custom intensity, restart to apply new settings
+  if (isLoadTestActive && currentIntensity === IntensityLevel.CUSTOM) {
+    stopForegroundLoadTest();
+    startForegroundLoadTest(IntensityLevel.CUSTOM);
+  }
 };
 
 /**

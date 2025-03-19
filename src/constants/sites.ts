@@ -1,37 +1,42 @@
-// List of websites to test in parallel
+// Test sites to check
 export const testSites = [
   'https://www.google.com',
-  'https://www.github.com',
-  'https://www.amazon.com',
-  'https://www.microsoft.com',
-  'https://www.apple.com',
   'https://www.facebook.com',
-  'https://www.twitter.com',
+  'https://www.amazon.com',
+  'https://www.youtube.com',
   'https://www.netflix.com',
-  'https://www.reddit.com',
-  'https://www.wikipedia.org',
+  'https://www.twitter.com',
+  'https://www.instagram.com',
 ];
 
-// Different load test intensities based on device capabilities
-export enum LoadIntensity {
-  LOW = 'low',
-  MEDIUM = 'medium',
-  HIGH = 'high',
+// Intensity levels for load testing with watermelon-themed names
+export enum IntensityLevel {
+  LOW = 'WATERMELON_SEED', // Lightest intensity (small like seeds)
+  MEDIUM = 'WATERMELON_SLICE', // Medium intensity (a slice)
+  HIGH = 'WATERMELON_HALF', // High intensity (half a watermelon)
+  VERY_HIGH = 'FULL_WATERMELON', // Very high intensity (full watermelon)
+  EXTREME = 'WATERMELON_PATCH', // Extreme intensity (a whole patch of watermelons)
+  CUSTOM = 'CUSTOM_MELON', // Custom settings
 }
 
-// Number of parallel requests for each intensity level
-export const requestsPerIntensity = {
-  [LoadIntensity.LOW]: 2,
-  [LoadIntensity.MEDIUM]: 5,
-  [LoadIntensity.HIGH]: 10,
+// Parallel request counts for each intensity level
+export const INTENSITY_REQUESTS = {
+  [IntensityLevel.LOW]: 2,
+  [IntensityLevel.MEDIUM]: 5,
+  [IntensityLevel.HIGH]: 10,
+  [IntensityLevel.VERY_HIGH]: 15,
+  [IntensityLevel.EXTREME]: 20,
 };
 
-// Interval between test cycles (in milliseconds)
-export const testIntervals = {
-  [LoadIntensity.LOW]: 5000, // 5 seconds
-  [LoadIntensity.MEDIUM]: 3000, // 3 seconds
-  [LoadIntensity.HIGH]: 1000, // 1 second
-};
+// Default interval between tests in milliseconds
+export const DEFAULT_TEST_INTERVAL = 2000;
 
-// Task identifier for background fetch
-export const BACKGROUND_LOAD_TEST_TASK = 'background-load-test-task';
+// Default values for custom settings
+export const DEFAULT_CUSTOM_REQUESTS = 10;
+export const DEFAULT_CUSTOM_INTERVAL = 2000;
+
+// Storage keys
+export const INTENSITY_LEVEL_KEY = 'intensity_level';
+export const AUTO_DETECT_INTENSITY_KEY = 'auto_detect_intensity';
+export const CUSTOM_REQUESTS_COUNT_KEY = 'custom_requests_count';
+export const CUSTOM_INTERVAL_KEY = 'custom_interval';

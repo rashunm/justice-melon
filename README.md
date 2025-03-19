@@ -6,6 +6,8 @@ A React Native Expo app designed for load testing websites from your mobile devi
 
 - **Load Test Multiple Sites**: Test multiple websites in parallel to measure their response times
 - **Adjustable Resource Usage**: Choose between low, medium, and high intensity based on your device capabilities
+- **Auto Intensity Detection**: Automatically determine the optimal testing intensity based on device specifications
+- **Device Specifications**: View detailed information about your device hardware and capabilities
 - **Background Testing on Android**: Continue testing websites even when the app is in the background (Android only)
 - **Detailed Results**: View comprehensive test results with filtering and search functionality
 - **Clean UI**: Modern, responsive UI built with React Native Paper
@@ -43,18 +45,31 @@ npm run ios
 
 1. **Start Load Testing**:
 
-   - Select the desired intensity (Low, Medium, High)
+   - Select the desired intensity (Low, Medium, High) or enable Auto Intensity
    - Toggle background mode on Android if needed
    - Tap the "Start Load Testing" button
 
-2. **View Results**:
+2. **View Device Specifications**:
+
+   - Tap the "Device Specifications" button to view detailed information about your device
+   - See the recommended testing intensity based on your device capabilities
+
+3. **View Results**:
 
    - Real-time results appear on the home screen
    - Navigate to the Results screen for detailed statistics and filtering
 
-3. **Customize Settings**:
+4. **Customize Settings**:
    - Add custom websites to test in the Settings screen
    - Clear test results as needed
+
+## Auto Intensity Detection
+
+The app analyzes your device specifications to recommend the optimal testing intensity:
+
+- **High Intensity**: For devices from 2018 or newer with 3GB+ RAM
+- **Medium Intensity**: For devices from 2016 or newer with 2GB+ RAM
+- **Low Intensity**: For older or less capable devices
 
 ## Note for Background Testing on Android
 
@@ -70,6 +85,7 @@ For optimal background testing on Android:
 - TypeScript
 - React Native Paper
 - React Navigation
+- Expo Device (for hardware detection)
 
 ## Contributing
 

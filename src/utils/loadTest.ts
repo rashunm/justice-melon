@@ -1,8 +1,4 @@
-import {
-  testSites,
-  requestsPerIntensity,
-  LoadIntensity,
-} from '../constants/sites';
+import { testSites } from '../constants/sites';
 
 // Simple interface to store result statistics
 export interface TestResult {
@@ -49,10 +45,10 @@ export const testSingleUrl = async (url: string): Promise<TestResult> => {
  * Runs a batch of load tests in parallel
  */
 export const runLoadTestBatch = async (
-  intensity: LoadIntensity
+  requestCount: number
 ): Promise<TestResult[]> => {
-  // Determine how many parallel requests to make based on selected intensity
-  const parallelRequests = requestsPerIntensity[intensity];
+  // Ensure the request count is valid
+  const parallelRequests = Math.max(1, Math.min(requestCount, 50));
 
   // Pick random sites to test from the list
   const sitesToTest: string[] = [];
