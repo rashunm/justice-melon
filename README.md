@@ -1,96 +1,162 @@
-# Load Testing Mobile App
+# Mr. Justice Melon
 
-A React Native Expo app designed for load testing websites from your mobile device.
+<p align="center">
+  <img src="./assets/icon.png" alt="Mr. Justice Melon Logo" width="120" />
+</p>
+
+<p align="center">
+  <i>
+    Like seeds scattered by the wind,<br>
+    Our digital justice blooms across the web,<br>
+    A crimson tide of righteousness,<br>
+    Washing over those who threaten peace.
+  </i>
+</p>
+
+## About
+
+Mr. Justice Melon is a mobile application designed for serving distributed justice to websites. The app allows you to test website responsiveness and performance by sending controlled requests with adjustable intensity levels.
 
 ## Features
 
-- **Load Test Multiple Sites**: Test multiple websites in parallel to measure their response times
-- **Adjustable Resource Usage**: Choose between low, medium, and high intensity based on your device capabilities
-- **Auto Intensity Detection**: Automatically determine the optimal testing intensity based on device specifications
-- **Device Specifications**: View detailed information about your device hardware and capabilities
-- **Background Testing on Android**: Continue testing websites even when the app is in the background (Android only)
-- **Detailed Results**: View comprehensive test results with filtering and search functionality
-- **Clean UI**: Modern, responsive UI built with React Native Paper
-
-## Screenshots
-
-(Screenshots would be added here after building the app)
+- **Adjustable Intensity**: Choose from presets (Seed, Slice, Half, Full, Patch) or create custom settings
+- **Background Mode**: Continue serving justice even when the app is in the background
+- **Auto-Intensity**: Let the app determine the optimal intensity based on your device capabilities
+- **Custom Sites**: Add your own websites to the justice serving list
+- **Detailed Statistics**: View performance metrics for your justice serving sessions
+- **Device-Specific Optimization**: Automatically adjusts to your device's capabilities
 
 ## Installation
 
-1. Ensure you have Node.js and npm installed
-2. Install Expo CLI: `npm install -g expo-cli`
-3. Clone this repository
-4. Navigate to the project directory
-5. Install dependencies: `npm install`
-6. Start the app: `npm start`
+Since Mr. Justice Melon is not available on Google Play Store, you can install it directly:
 
-## Development Setup
+1. Download the APK from our [release page](https://github.com/mrjusticemelon/justice-melon/releases) (link placeholder)
+2. Enable installation from unknown sources in your device settings
+3. Open the downloaded APK to install
+4. Grant necessary permissions when prompted
+5. For better performance with background mode, disable battery optimization (Settings > Apps > Mr. Justice Melon > Battery > Don't optimize)
 
-```bash
-# Install dependencies
-npm install
+## Quick Start Guide
 
-# Start the development server
-npm start
+1. **Launch the app** - You'll see the main screen with a toggle button
+2. **Set intensity** - Choose your desired intensity level from the Justice Serving Controls
+3. **Press the toggle** - Activate justice serving with a tap
+4. **View results** - Monitor performance stats and results in real-time
 
-# Run on Android
-npm run android
+## App Screens
 
-# Run on iOS
-npm run ios
+### Home Screen
+
+The Home Screen features a central toggle for starting/stopping justice serving, intensity level selection, and expandable controls for fine-tuning your justice serving options.
+
+### Settings Screen
+
+The Settings Screen allows you to:
+
+- Configure custom intensity settings (parallel requests and intervals)
+- Manage justice sites (view, add, import)
+- Clear saved results
+- Check device specifications
+
+### Results Screen
+
+The Results Screen displays detailed statistics from your justice serving sessions, including response times, success rates, and individual website performance.
+
+## For Developers
+
+### Development Setup
+
+#### Prerequisites
+
+- Node.js (v14 or later)
+- Yarn or npm
+- React Native development environment
+- Expo CLI (`npm install -g expo-cli`)
+- Android Studio for Android development
+
+#### Installation
+
+1. Clone the repository: `git clone https://github.com/mrjusticemelon/justice-melon.git`
+2. Install dependencies: `yarn install` or `npm install`
+3. Start the development server: `expo start` or `yarn start` or `npm start`
+4. Run on Android: `yarn android` or connect a device via USB and select it in the Expo Go app
+
+### Project Structure
+
+```
+justice-melon/
+├── assets/             # Images, fonts, and other static assets
+│   ├── components/     # Reusable UI components
+│   ├── constants/      # Application constants
+│   ├── navigation/     # Navigation configuration
+│   ├── screens/        # Screen components
+│   ├── services/       # Services for background processes
+│   ├── theme/          # Theme configuration
+│   └── utils/          # Utility functions
+├── App.tsx             # Root component
+└── app.json            # Expo configuration
 ```
 
-## How to Use
+### Contributing
 
-1. **Start Load Testing**:
+We welcome contributions from the community! Here's how you can help:
 
-   - Select the desired intensity (Low, Medium, High) or enable Auto Intensity
-   - Toggle background mode on Android if needed
-   - Tap the "Start Load Testing" button
+1. **Find an issue**: Look for open issues or create a new one
+2. **Fork and clone**: Fork the repository and clone it locally
+3. **Create a branch**: Make your changes in a new branch
+4. **Follow guidelines**: Adhere to our coding standards and testing requirements
+5. **Submit a PR**: Create a pull request with a clear description of your changes
 
-2. **View Device Specifications**:
+For detailed contribution guidelines, please see [CONTRIBUTING.md](CONTRIBUTING.md).
 
-   - Tap the "Device Specifications" button to view detailed information about your device
-   - See the recommended testing intensity based on your device capabilities
+### Coding Standards
 
-3. **View Results**:
+- Use TypeScript for all new code
+- Use functional components with hooks
+- Follow existing code style and formatting
+- Include proper type definitions
+- Add tests for new functionality
 
-   - Real-time results appear on the home screen
-   - Navigate to the Results screen for detailed statistics and filtering
+## Troubleshooting
 
-4. **Customize Settings**:
-   - Add custom websites to test in the Settings screen
-   - Clear test results as needed
+### App Performance Issues
 
-## Auto Intensity Detection
+- Reduce intensity level
+- Close other apps running in the background
+- Ensure your device has sufficient free memory
 
-The app analyzes your device specifications to recommend the optimal testing intensity:
+### Background Mode Not Working (Android)
 
-- **High Intensity**: For devices from 2018 or newer with 3GB+ RAM
-- **Medium Intensity**: For devices from 2016 or newer with 2GB+ RAM
-- **Low Intensity**: For older or less capable devices
+- Check battery optimization settings
+- Ensure background permissions are granted
 
-## Note for Background Testing on Android
+### Websites Not Responding
 
-For optimal background testing on Android:
+- Check your internet connection
+- The target website may be temporarily down
 
-1. Disable battery optimization for this app
-2. Settings > Apps > Load Testing > Battery > Don't optimize
+## Privacy and Legal
 
-## Technologies Used
+Mr. Justice Melon respects your privacy:
 
-- React Native
-- Expo
-- TypeScript
-- React Native Paper
-- React Navigation
-- Expo Device (for hardware detection)
+- No personal data is collected or shared
+- All operations occur within the confines of your device
+- Use responsibly and within the terms of service of target websites
 
-## Contributing
+## Support
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+If you encounter issues or have questions:
+
+- Check our [FAQ](https://mrjusticemelon.com/faq) (link placeholder)
+- Report bugs through the app settings or by creating an issue on GitHub
+- Contact support at support@mrjusticemelon.com
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Mr. Justice Melon is released under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+<p align="center">
+  Thank you for choosing Mr. Justice Melon for your justice serving needs!
+</p>
