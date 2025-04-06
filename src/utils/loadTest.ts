@@ -33,6 +33,14 @@ export const initializeAvailableSites = async (): Promise<void> => {
   }
 };
 
+// Add this function before testSingleUrl
+const ensureHttps = (url: string): string => {
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    return 'https://' + url;
+  }
+  return url;
+};
+
 /**
  * Runs a load test on a single URL and returns the result with a timeout
  */
@@ -56,7 +64,7 @@ export const testSingleUrl = async (url: string): Promise<TestResult> => {
     });
 
     // Create the fetch request
-    const fetchPromise = fetch(url, {
+    const fetchPromise = fetch(ensureHttps(url), {
       method: 'GET',
       headers: {
         Accept: 'text/html',
@@ -71,9 +79,19 @@ export const testSingleUrl = async (url: string): Promise<TestResult> => {
     ])) as Response;
 
     result.responseTime = Date.now() - startTime;
-    result.statusCode = response.status;
+
+    // Make sure we have a valid status code
+    if (response && typeof response.status === 'number') {
+      result.statusCode = response.status;
+    } else {
+      // Default to 0 for connection errors but don't create Response objects with it
+      result.statusCode = null;
+      result.error = 'Invalid response';
+    }
   } catch (error) {
     result.responseTime = Date.now() - startTime;
+    // For network errors, don't set status code to 0
+    result.statusCode = null;
     result.error = error instanceof Error ? error.message : 'Unknown error';
   }
 
@@ -126,13 +144,22 @@ export const runLoadTestBatch = async (
   const results: TestResult[] = [];
 
   // Use Promise.allSettled to process all requests without waiting for slow ones
-  const promises = sitesToTest.map((site) =>
-    testSingleUrl(site)
-      .then((result) => results.push(result))
-      .catch((_) => {
-        /* Ignore individual failures */
+  const promises = sitesToTest.map((site) => {
+    return testSingleUrl(site)
+      .then((result) => {
+        results.push(result);
       })
-  );
+      .catch((error) => {
+        // If there's an unexpected error in the test itself
+        results.push({
+          url: site,
+          responseTime: 0,
+          statusCode: null,
+          error: error instanceof Error ? error.message : 'Unexpected error',
+          timestamp: Date.now(),
+        });
+      });
+  });
 
   // Wait for all requests to either complete or timeout
   await Promise.allSettled(promises);
