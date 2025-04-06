@@ -1,4 +1,5 @@
-import { testSites, fetchTestSites } from '../constants/sites';
+import { fetchTestSites } from '../constants/sites';
+import { testSites } from '../constants/testSites';
 
 // Simple interface to store result statistics
 export interface TestResult {

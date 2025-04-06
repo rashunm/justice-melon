@@ -1,15 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-// Default test sites to use as fallback
-export const testSites = [
-  'https://www.google.com',
-  'https://www.facebook.com',
-  'https://www.amazon.com',
-  'https://www.youtube.com',
-  'https://www.netflix.com',
-  'https://www.twitter.com',
-  'https://www.instagram.com',
-];
+import { testSites } from './testSites';
 
 // GitHub URL for sites.json
 export const GITHUB_SITES_URL =
